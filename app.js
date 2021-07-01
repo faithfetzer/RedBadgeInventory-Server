@@ -18,12 +18,13 @@ app.use('/items', controllers.itemcontroller);
 app.use('/locations', controllers.locationcontroller);
 app.use('/user/info', controllers.usercontroller);
 app.use('/user/update', controllers.usercontroller);
+app.use('/user/idadmin', controllers.usercontroller);
 app.use('/user/admin', controllers.usercontroller);
 app.use('/user/delete', controllers.usercontroller);
 
 
 dbConnection.authenticate()
-    //.then(() => dbConnection.sync({alter: true}))
+    // .then(() => dbConnection.sync({alter: true}))
     // run the above line one time, if updating models
     .then(() => dbConnection.sync())
     .then(() =>{

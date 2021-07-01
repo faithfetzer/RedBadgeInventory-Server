@@ -2,10 +2,35 @@ const router = require("express").Router();
 const { UserModel } = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { UniqueConstraintError, json } = require('sequelize');
+const { UniqueConstraintError } = require('sequelize');
 const validateJWT = require('../middleware/validateSession');
-const { route } = require("./locationcontroller");
-const User = require("../models/usermodel");
+
+// get /user/idadmin - get user id by email for admin 
+
+router.get('/idadmin', validateJWT, async(req, res) =>{
+    let {email} = req.body
+    const userID = await UserModel.findOne({
+        where: {
+            email: email
+        }
+    })
+    try {
+        if(req.user.admin){
+            res.status(200).json({
+            message: `User id successfully retrieved`,
+            id: userID.id,
+        })
+        } else{
+            res.status(500).json({
+                message: `Not authorized`
+            })
+        }
+    } catch (err) {
+        res.status(500).json({
+            message: `Error getting user information. Error ${err}`
+        })
+    }
+})
 
 // GET /user/info/:id -user account info by ID- validateJWT
 
@@ -13,23 +38,23 @@ router.get('/:id', validateJWT, async (req, res) => {
     // console.log('param', req.params.id)
     // console.log('user', req.user.id)
     // console.log('admin', req.user.admin)
-    if (req.params.id == req.user.id || req.user.admin) {
-        const userToGet = await UserModel.findOne({
-            where: { id: req.params.id }
-        })
-        try {
+    try {
+        if (req.params.id == req.user.id || req.user.admin) {
+            const userToGet = await UserModel.findOne({
+                where: { id: req.params.id }
+                })
             res.status(200).json({
                 message: `User information successfully retrieved`,
                 user: userToGet,
             })
-        } catch (err) {
-            res.status(500).json({
-                message: `Error getting user information`
+        } else {
+            res.status(400).json({
+                message: `Not authorized to view user information`
             })
         }
-    } else {
-        res.status(400).json({
-            message: `Not authorized to view user information`
+    } catch (err) {
+        res.status(500).json({
+            message: `Error getting user information. Error ${err}`
         })
     }
 })
@@ -40,11 +65,11 @@ router.post('/login', async (req, res) => {
     let { email, password } = req.body;
     console.log(req.body)
     try {
-        let loginUser = await UserModel.findOne({
+        const loginUser = await UserModel.findOne({
             where: { email: email }
         })
         if (loginUser) {
-            let passwordComparison = await bcrypt.compare(password, loginUser.password)
+            const passwordComparison = await bcrypt.compare(password, loginUser.password)
             if (passwordComparison) {
                 const token = jwt.sign(
                     { id: loginUser.id },
@@ -77,7 +102,7 @@ router.post('/login', async (req, res) => {
 // POST /user/register - user create
 
 router.post('/register', async (req, res) => {
-    let { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
     try {
         const user = await UserModel.create({
             firstName: firstName,
@@ -114,48 +139,44 @@ router.post('/register', async (req, res) => {
 // PUT /user/update/:id -edit user account- validateJWT
 
 router.put('/update/:id', validateJWT, async (req, res) => {
-    if (req.params.id == req.user.id || req.user.admin) {
-        console.log('update')
-        let { firstName, lastName, email, role } = req.body;
-        const userId = req.params.id;
-        console.log(req.body);
-        const query = {
-            where: {
-                id: userId
+    try {
+        if (req.params.id == req.user.id || req.user.admin) {
+            const { firstName, lastName, email, role } = req.body;
+            const userId = req.params.id;
+            // console.log(req.body);
+            const query = {
+                where: {
+                    id: userId
+                }
             }
-        }
-        const userToUpdate = {
-            firstName: firstName, 
-            lastName: lastName, 
-            email: email, 
-            role: role
-        };
-        try {
+            const userToUpdate = {
+                firstName: firstName, 
+                lastName: lastName, 
+                email: email, 
+                role: role
+            };
             const updateAccount = await UserModel.update(userToUpdate, query)
                 res.status(200).json({
                     message: `User account updated`,
-                    update: updateAccount
+                    updated: updateAccount
                     })
-            } 
-        catch (err) {
+        } else{
+            res.status(401).json({
+                message: `Not authorized to update`
+            })
+        }
+    } catch (err) {
             console.log(err)
             res.status(500).json({
                 message: `User account not updated. Error: ${err}`
             })
         }
-    
-    } else{
-        res.status(401).json({
-            message: `Not authorized to update`
-        })
-    }
-    }
-)
+})
 
-// PUT /user/update/admin -edit user account to make admin
+// PUT /user/admin -edit user account to make admin
 
 router.put('/admin', validateJWT, async(req, res) => {
-    let { email, admin } = req.body;
+    const { email, admin } = req.body;
     console.log(req.body);
     const userToUpdate = await UserModel.findOne({
         where: { email: email }
@@ -187,41 +208,32 @@ router.put('/admin', validateJWT, async(req, res) => {
 // DELETE /user/delete/:id -delete user account by user id- validateJWT
 
 router.delete('/delete/:id', validateJWT, async (req, res) => {
-    if (req.params.id == req.user.id || req.user.admin) {
-            const { email, password } = req.body;
-            const userID = req.user.id;
-            // console.log('id', req.user.id)
+    try {
+        if (req.params.id == req.user.id || req.user.admin) {
+            const { email } = req.body;
             const userToDelete = await UserModel.findOne({
-                where: { id: userID }
-            })
+                where: { email: email }
+                })
             console.log(userToDelete);
-            try {
-                if (userToDelete) {
-                    let passwordComparison = await bcrypt.compare(password, userToDelete.password);
-                    if (passwordComparison) {
-                        const deletedUser = await UserModel.destroy({
-                            where: { id: userID }
+            if (userToDelete) {
+                const deletedUser = await UserModel.destroy({
+                        where: { email: email }
                         })
-                        res.status(200).json({ msg: "User Account has been deleted" });
-                    } else {
-                        res.status(401).json({
-                            msg: `Incorrect password`
-                        })
-                    }
-                } else {
-                    res.status(401).json({
-                        msg: `Incorrect email`
+                        res.status(200).json({ message: "User Account has been deleted" });
+            } else {
+                res.status(401).json({
+                    message: `Incorrect email`
                     })
-                }
-            } catch (err) {
-                res.status(500).json({
-                    msg: `Error deleting user ${err}`
-                }) 
-    }
-    }else {
-        res.status(401).json({
-            message: `Not authorized to delete user`
-        })
+            }
+        }else {
+            res.status(401).json({
+                message: `Not authorized to delete user`
+            })
+        }
+    } catch (err) {
+        res.status(500).json({
+            message: `Error deleting user ${err}`
+            }) 
     }
 })
 
