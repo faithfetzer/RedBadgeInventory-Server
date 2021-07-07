@@ -37,3 +37,6 @@ dbConnection.authenticate()
     .catch((err) => {
         console.log(`[Server]: Server crashed. Error = ${err}`);
     });
+
+    // test update
+    
