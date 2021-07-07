@@ -2,7 +2,7 @@ const router = require("express").Router();
 const {ItemModel, UserModel, LocationModel} = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const validateJWT = require('../middleware/validateSession');
+const validateJWT = require('../middleware/validatesession');
 
 // GET /items/available - all available items all makers (product feed)
 
