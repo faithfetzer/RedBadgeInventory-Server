@@ -13,33 +13,9 @@ router.get('/available', validateJWT, async(req,res) =>{
             available : true
         }
         })
-        // if(availableItems.totalQuantity - availableItems.quantitySold > 0){
-            // const makerInfo = await UserModel.findOne({
-            //     where: {id: availableItems.maker_id}
-            // })
             res.status(200).json({
                 availableItems
-                // makerEmail: makerInfo.email,
-                // name: availableItems.name,
-                // description: availableItems.description,
-                // volume:  availableItems.volume,
-                // volumeUnit: availableItems.volumeUnit,
-                // weight: availableItems.weight,
-                // weightUnit: availableItems.weightUnit,
-                // height: availableItems.height,
-                // width: availableItems.width,
-                // depth: availableItems.depth,
-                // lengthUnit: availableItems.lengthUnit,
-                // category: availableItems.category,
-                // price: availableItems.price,
-                // quantityAvailable: availableItems.totalQuantity - availableItems.quantitySold
-
             })
-        // } else{
-        //     res.status(200).json({
-        //         message: `No items available`
-        //     })
-        // }
     } catch (err) {
         res.status(500).json({
             message: `Error getting item information. Error ${err}`

@@ -18,14 +18,16 @@ app.use('/items', controllers.itemcontroller);
 app.use('/locations', controllers.locationcontroller);
 app.use('/user/info', controllers.usercontroller);
 app.use('/user/update', controllers.usercontroller);
-app.use('/user/idadmin', controllers.usercontroller);
-app.use('/user/admin', controllers.usercontroller);
+
 app.use('/user/delete', controllers.usercontroller);
 
+app.use(require('./middleware/validateadmin'));
+app.use('/user/idadmin', controllers.usercontroller);
+app.use('/user/admin', controllers.usercontroller);
 
 dbConnection.authenticate()
     // .then(() => dbConnection.sync({alter: true}))
-    // run the above line one time, if updating models
+    // run the above line to update models
     .then(() => dbConnection.sync())
     .then(() =>{
         app.listen(process.env.PORT, ()=>{

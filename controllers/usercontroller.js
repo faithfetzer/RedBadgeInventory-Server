@@ -3,28 +3,24 @@ const { UserModel } = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { UniqueConstraintError } = require('sequelize');
-const validateJWT = require('../middleware/validateSession');
+const validateJWT = require('../middleware/validatesession');
+const validateAdmin = require('../middleware/validateadmin')
 
-// get /user/idadmin - get user id by email for admin 
+// get /user/idadmin - get user id by email for admin // post???
 
-router.get('/idadmin', validateJWT, async(req, res) =>{
-    let {email} = req.body
+router.post('/idadmin', validateJWT, validateAdmin, async(req, res) =>{
+    const {email} = req.body
     const userID = await UserModel.findOne({
         where: {
             email: email
         }
     })
+    console.log(req.body)
     try {
-        if(req.user.admin){
             res.status(200).json({
-            message: `User id successfully retrieved`,
-            id: userID.id,
+            message: `User info successfully retrieved`,
+            user: userID,
         })
-        } else{
-            res.status(500).json({
-                message: `Not authorized`
-            })
-        }
     } catch (err) {
         res.status(500).json({
             message: `Error getting user information. Error ${err}`
@@ -63,16 +59,17 @@ router.get('/:id', validateJWT, async (req, res) => {
 
 router.post('/login', async (req, res) => {
     let { email, password } = req.body;
-    console.log(req.body)
+    // console.log(req.body)
     try {
         const loginUser = await UserModel.findOne({
             where: { email: email }
         })
         if (loginUser) {
+            // console.log('user info', loginUser.id, loginUser.admin)
             const passwordComparison = await bcrypt.compare(password, loginUser.password)
             if (passwordComparison) {
                 const token = jwt.sign(
-                    { id: loginUser.id },
+                    { id: loginUser.id, admin: loginUser.admin },
                     process.env.JWT_SECRET,
                     { expiresIn: 60 * 60 * 12 }
                 )
@@ -113,7 +110,7 @@ router.post('/register', async (req, res) => {
             admin: false
         })
         const token = jwt.sign(
-            { id: user.id },
+            { id: user.id, admin: user.admin },
             process.env.JWT_SECRET,
             { expiresIn: 60 * 60 * 12 }
         )
@@ -175,7 +172,7 @@ router.put('/update/:id', validateJWT, async (req, res) => {
 
 // PUT /user/admin -edit user account to make admin
 
-router.put('/admin', validateJWT, async(req, res) => {
+router.put('/admin', validateJWT, validateAdmin, async(req, res) => {
     const { email, admin } = req.body;
     console.log(req.body);
     const userToUpdate = await UserModel.findOne({
@@ -183,7 +180,6 @@ router.put('/admin', validateJWT, async(req, res) => {
     })
     console.log(userToUpdate)
     try {
-        if (req.user.admin){
         const updateAdmin = await UserModel.update(
             { admin: admin },
             { where: { email: email } })
@@ -191,11 +187,6 @@ router.put('/admin', validateJWT, async(req, res) => {
                 message: `User admin status updated`,
                 update: updateAdmin
                 })
-        } else {
-            res.status(401).json({
-                message: `Not authorized to update`
-            })
-        }
     } catch (err) {
         console.log(err)
         res.status(500).json({
