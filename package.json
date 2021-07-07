@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Server for Inventory Application to Manage Items and Listings",
   "main": "app.js",
+  "dialect": "postgres",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js"
+    "start": "node app.js",
+    "dev": "nodemon"
   },
   "author": "FEF",
   "license": "ISC",
@@ -17,5 +19,8 @@
     "pg": "^8.6.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.6.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.9"
   }
 }
