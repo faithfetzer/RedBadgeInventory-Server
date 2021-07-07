@@ -36,7 +36,3 @@ const validateAdmin = async (req, res, next) => {
 
 module.exports = validateAdmin
 
-// add admin true/false state into token in login/register
-// validate admin in admin accounts
-// can get rid of user/idadmin? change to if/else
-// change this code to check admin status
