@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const {LocationModel} = require("../models");
+const {models} = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validateJWT = require('../middleware/validatesession');
@@ -8,8 +8,8 @@ const validateJWT = require('../middleware/validatesession');
 
 router.get('/', validateJWT, async(req, res) =>{
     try{
-        const myLocations = await LocationModel.findAll({
-            where: {maker_id: req.user.id}
+        const myLocations = await models.LocationModel.findAll({
+            where: {userId: req.user.id}
         })
         res.status(200).json({
             myLocations
@@ -26,15 +26,15 @@ router.get('/', validateJWT, async(req, res) =>{
 router.post('/add', validateJWT, async(req, res) =>{
     const { name, url, address, notes } = req.body
     locationEntry = {
-        maker_id: req.user.id,
         name: name,
         url: url,
         address: address,
-        notes: notes
+        notes: notes,
+        userId: req.user.id
     }
     try{
         if(req.user.role == 'maker'){
-            const newLocation = await LocationModel.create(locationEntry)
+            const newLocation = await models.LocationModel.create(locationEntry)
             res.status(200).json(newLocation)
         } else{
             res.status(401).json({
@@ -53,15 +53,15 @@ router.post('/add', validateJWT, async(req, res) =>{
 router.put('/update/:id', validateJWT, async(req, res) =>{
     const {name, url, address, notes} = req.body
     const locationToUpdate = {
-        maker_id: req.user.id,
         name: name,
         url: url,
         address: address,
-        notes: notes
+        notes: notes,
+        userId: req.user.id
     }
     try{
         if(req.user.role == 'maker'){
-            const updatedLocation = await LocationModel.update(locationToUpdate, {where: {id: req.params.id}})
+            const updatedLocation = await models.LocationModel.update(locationToUpdate, {where: {id: req.params.id}})
             res.status(200).json({
                 message: `Location updated`,
                 updated: updatedLocation
@@ -88,7 +88,7 @@ router.delete('/delete/:id', validateJWT, async(req, res) =>{
     try{
         if(req.user.role == 'maker'){
             if(locationToDelete){
-                const deletedLocation = await LocationModel.destroy({
+                const deletedLocation = await models.LocationModel.destroy({
                     where: {
                         id: req.params.id
                     }

@@ -26,6 +26,7 @@ app.use('/user/idadmin', controllers.usercontroller);
 app.use('/user/admin', controllers.usercontroller);
 
 dbConnection.authenticate()
+    // .then(() => dbConnection.sync({force: true}))
     // .then(() => dbConnection.sync({alter: true}))
     // run the above line to update models
     .then(() => dbConnection.sync())

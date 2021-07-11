@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const {ItemModel, UserModel, LocationModel} = require("../models");
+const {models} = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validateJWT = require('../middleware/validatesession');
@@ -8,8 +8,10 @@ const validateJWT = require('../middleware/validatesession');
 
 router.get('/available', validateJWT, async(req,res) =>{   
     try{
-        const availableItems = await ItemModel.findAll({
-        where: {
+        const availableItems = await models.ItemModel.findAll({
+            include: {
+                model: models.UserModel},
+            where: {
             available : true
         }
         })
@@ -28,10 +30,13 @@ router.get('/available', validateJWT, async(req,res) =>{
 router.get('/mine', validateJWT, async(req,res) =>{   
     try{
         if(req.user.role == 'maker'){
-            const myItems = await ItemModel.findAll({
+            const myItems = await models.ItemModel.findAll({
+            include: {
+                    model: models.LocationModel},
             where: {
-                maker_id : req.user.id,
+                userId : req.user.id,
             }
+
             })
             res.status(200).json({
                 myItems
@@ -70,32 +75,37 @@ router.post('/add', validateJWT, async(req,res) =>{
         quantityListed,
         quantitySold
     } = req.body
-    const locationListed = await LocationModel.findOne({
-        where: {name: location}
+    const locationListed = await models.LocationModel.findOne({
+        where: {name: location, userId: req.user.id}
     })
-    const itemEntry = {
-        maker_id: req.user.id,
-        name: name, 
-        description: description,
-        volume: volume,
-        volumeUnit: volumeUnit,
-        weight: weight,
-        weightUnit: weightUnit,
-        height: height,
-        width: width,
-        depth: depth,
-        lengthUnit: lengthUnit,
-        category: category,
-        available: available,
-        price: price,
-        totalQuantity: totalQuantity,
-        location: locationListed.id,
-        quantityListed: quantityListed,
-        quantitySold: quantitySold
-    }
     try{
+        if(locationListed){
+        locationValue = locationListed.id
+        } else {
+            locationValue = null
+        }
+        const itemEntry = {
+            name: name, 
+            description: description,
+            volume: volume,
+            volumeUnit: volumeUnit,
+            weight: weight,
+            weightUnit: weightUnit,
+            height: height,
+            width: width,
+            depth: depth,
+            lengthUnit: lengthUnit,
+            category: category,
+            available: available,
+            price: price,
+            totalQuantity: totalQuantity,
+            quantityListed: quantityListed,
+            quantitySold: quantitySold,
+            userId: req.user.id,
+            locationId: locationValue
+    }
         if(req.user.role == 'maker'){
-            const newItem = await ItemModel.create(itemEntry)
+            const newItem = await models.ItemModel.create(itemEntry)
             res.status(200).json(newItem)
         } else{
             res.status(401).json({
@@ -131,11 +141,10 @@ router.put('/update/:id', validateJWT, async(req, res) =>{
         quantityListed,
         quantitySold
     } = req.body
-    const locationListed = await LocationModel.findOne({
+    const locationListed = await models.LocationModel.findOne({
         where: {name: location}
     })
     const itemToUpdate = {
-        maker_id: req.user.id,
         name: name, 
         description: description,
         volume: volume,
@@ -150,13 +159,15 @@ router.put('/update/:id', validateJWT, async(req, res) =>{
         available: available,
         price: price,
         totalQuantity: totalQuantity,
-        location: locationListed.id,
         quantityListed: quantityListed,
-        quantitySold: quantitySold
+        quantitySold: quantitySold,
+        userId: req.user.id,
+        locationId: locationListed.id
+
     }
     try {
         if(req.user.role == 'maker'){
-            const updatedItem = await ItemModel.update(itemToUpdate, {where: {id : req.params.id}})
+            const updatedItem = await models.ItemModel.update(itemToUpdate, {where: {id : req.params.id}})
             res.status(200).json({
                 message: `Item updated`,
                 updated: updatedItem
@@ -178,13 +189,13 @@ router.put('/update/:id', validateJWT, async(req, res) =>{
 // DELETE /items/delete -delete items for logged in maker
 
 router.delete('/delete/:id', validateJWT, async(req, res) =>{
-    const itemToDelete = await ItemModel.findOne({
+    const itemToDelete = await models.ItemModel.findOne({
         where: { id: req.params.id }
         })
     try {
         if(req.user.role == 'maker'){
             if (itemToDelete) {
-                const deletedItem = await ItemModel.destroy({
+                const deletedItem = await models.ItemModel.destroy({
                     where: { id: req.params.id }
                 })
                 res.status(200).json({ 
