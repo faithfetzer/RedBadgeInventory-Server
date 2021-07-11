@@ -26,10 +26,10 @@ app.use('/user/idadmin', controllers.usercontroller);
 app.use('/user/admin', controllers.usercontroller);
 
 dbConnection.authenticate()
-    .then(() => dbConnection.sync({force: true}))
+    // .then(() => dbConnection.sync({force: true}))
     // .then(() => dbConnection.sync({alter: true}))
     // run the above line to update models
-    // .then(() => dbConnection.sync())
+    .then(() => dbConnection.sync())
     .then(() =>{
         app.listen(process.env.PORT, ()=>{
             console.log(`[Server]: App is listening on ${process.env.PORT}.`);
