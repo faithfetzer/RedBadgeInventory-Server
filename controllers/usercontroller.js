@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { UserModel } = require("../models");
+const { models } = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { UniqueConstraintError } = require('sequelize');
@@ -10,17 +10,19 @@ const validateAdmin = require('../middleware/validateadmin')
 
 router.post('/idadmin', validateJWT, validateAdmin, async(req, res) =>{
     const {email} = req.body
-    const userID = await UserModel.findOne({
+    const userID = await models.UserModel.findOne({
         where: {
             email: email
         }
     })
     console.log(req.body)
-    try {
+    try {if(userID){
             res.status(200).json({
             message: `User info successfully retrieved`,
             user: userID,
-        })
+        })} else{res.status(401).json({
+            message: `Incorrect email`
+        })}
     } catch (err) {
         res.status(500).json({
             message: `Error getting user information. Error ${err}`
@@ -36,7 +38,7 @@ router.get('/:id', validateJWT, async (req, res) => {
     // console.log('admin', req.user.admin)
     try {
         if (req.params.id == req.user.id || req.user.admin) {
-            const userToGet = await UserModel.findOne({
+            const userToGet = await models.UserModel.findOne({
                 where: { id: req.params.id }
                 })
             res.status(200).json({
@@ -61,7 +63,7 @@ router.post('/login', async (req, res) => {
     let { email, password } = req.body;
     // console.log(req.body)
     try {
-        const loginUser = await UserModel.findOne({
+        const loginUser = await models.UserModel.findOne({
             where: { email: email }
         })
         if (loginUser) {
@@ -101,7 +103,7 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
     const { firstName, lastName, email, password, role } = req.body;
     try {
-        const user = await UserModel.create({
+        const user = await models.UserModel.create({
             firstName: firstName,
             lastName: lastName,
             email: email,
@@ -152,7 +154,7 @@ router.put('/update/:id', validateJWT, async (req, res) => {
                 email: email, 
                 role: role
             };
-            const updateAccount = await UserModel.update(userToUpdate, query)
+            const updateAccount = await models.UserModel.update(userToUpdate, query)
                 res.status(200).json({
                     message: `User account updated`,
                     updated: updateAccount
@@ -175,18 +177,24 @@ router.put('/update/:id', validateJWT, async (req, res) => {
 router.put('/admin', validateJWT, validateAdmin, async(req, res) => {
     const { email, admin } = req.body;
     console.log(req.body);
-    const userToUpdate = await UserModel.findOne({
+    const userToUpdate = await models.UserModel.findOne({
         where: { email: email }
     })
     console.log(userToUpdate)
     try {
-        const updateAdmin = await UserModel.update(
+        if(userToUpdate.role === 'maker'){
+        const updateAdmin = await models.UserModel.update(
             { admin: admin },
             { where: { email: email } })
             res.status(200).json({
                 message: `User admin status updated`,
                 update: updateAdmin
                 })
+            }else{
+                res.status(401).json({
+                    message: `User must be a maker to have admin status`
+                })
+            }
     } catch (err) {
         console.log(err)
         res.status(500).json({
@@ -202,12 +210,12 @@ router.delete('/delete/:id', validateJWT, async (req, res) => {
     try {
         if (req.params.id == req.user.id || req.user.admin) {
             const { email } = req.body;
-            const userToDelete = await UserModel.findOne({
-                where: { email: email }
+            const userToDelete = await models.UserModel.findOne({
+                where: { email: email, id: req.params.id }
                 })
             console.log(userToDelete);
             if (userToDelete) {
-                const deletedUser = await UserModel.destroy({
+                const deletedUser = await models.UserModel.destroy({
                         where: { email: email }
                         })
                         res.status(200).json({ message: "User Account has been deleted" });

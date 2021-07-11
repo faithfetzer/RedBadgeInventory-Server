@@ -2,10 +2,6 @@ const {DataTypes} = require('sequelize')
 const db = require('../db')
 
 const Item = db.define('item', {
-    maker_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
     name:{
         type: DataTypes.STRING,
         allowNull: false,
@@ -49,9 +45,9 @@ const Item = db.define('item', {
     totalQuantity: {
         type: DataTypes.INTEGER,
     },
-    location_id:{
-        type: DataTypes.INTEGER,
-    },
+    // location_id:{
+    //     type: DataTypes.INTEGER,
+    // },
     quantityListed:{
         type: DataTypes.INTEGER,
     },

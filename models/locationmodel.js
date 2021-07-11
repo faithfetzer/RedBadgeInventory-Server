@@ -2,10 +2,6 @@ const {DataTypes} = require('sequelize')
 const db = require('../db')
 
 const Location = db.define('location', {
-    maker_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
     name: {
         type: DataTypes.STRING,
         allowNull: false
