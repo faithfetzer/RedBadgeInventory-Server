@@ -45,9 +45,6 @@ const Item = db.define('item', {
     totalQuantity: {
         type: DataTypes.INTEGER,
     },
-    // location_id:{
-    //     type: DataTypes.INTEGER,
-    // },
     quantityListed:{
         type: DataTypes.INTEGER,
     },
