@@ -174,7 +174,7 @@ router.put('/update/:id', validateJWT, async (req, res) => {
 
 // PUT /user/admin -edit user account to make admin
 
-router.put('/admin', validateJWT, async(req, res) => {
+router.put('/admin', validateJWT, validateAdmin, async(req, res) => {
     const { email, admin } = req.body;
     console.log(req.body);
     const userToUpdate = await models.UserModel.findOne({
