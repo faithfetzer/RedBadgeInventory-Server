@@ -80,7 +80,7 @@ router.post('/add', validateJWT, async(req,res) =>{
     })
     try{
         if(locationListed){
-        locationValue = locationListed.id
+            locationValue = locationListed.id
         } else {
             locationValue = null
         }
@@ -142,9 +142,16 @@ router.put('/update/:id', validateJWT, async(req, res) =>{
         quantitySold
     } = req.body
     const locationListed = await models.LocationModel.findOne({
-        where: {name: location}
+        where: {name: location, userId: req.user.id}
     })
-    const itemToUpdate = {
+    
+    try {
+        if(locationListed){
+            locationValue = locationListed.id
+        } else {
+            locationValue = null
+        }
+        const itemToUpdate = {
         name: name, 
         description: description,
         volume: volume,
@@ -162,10 +169,8 @@ router.put('/update/:id', validateJWT, async(req, res) =>{
         quantityListed: quantityListed,
         quantitySold: quantitySold,
         userId: req.user.id,
-        locationId: locationListed.id
-
-    }
-    try {
+        locationId: locationValue
+        }
         if(req.user.role == 'maker'){
             const updatedItem = await models.ItemModel.update(itemToUpdate, {where: {id : req.params.id}})
             res.status(200).json({
